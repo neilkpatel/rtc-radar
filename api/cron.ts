@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
-    if (supabaseUrl && supabaseKey) {
+    if (supabaseUrl && supabaseKey && (youtubeData.length > 0 || redditData.length > 0)) {
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       const filmNowCount = analysis?.topTrends?.filter((t: any) => t.urgency === "film now").length || 0;
