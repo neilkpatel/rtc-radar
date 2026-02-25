@@ -67,9 +67,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const url = `https://www.reddit.com/r/${group}/hot.json?limit=25&t=week`;
         const resp = await fetch(url, {
-          headers: { "User-Agent": "RTCRadarBot/1.0 (food trend analysis tool)" },
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; RTCRadarBot/1.0; food trend analysis)",
+            "Accept": "application/json",
+          },
         });
-        if (!resp.ok) continue;
+        if (!resp.ok) {
+          console.log(`Reddit ${group}: HTTP ${resp.status}`);
+          continue;
+        }
         const data = await resp.json();
 
         for (const item of data.data?.children || []) {
@@ -148,6 +154,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from("cache")
           .upsert({ key: "reddit", data: result, updated_at: new Date().toISOString() });
       } catch { /* cache write failed, not critical */ }
+    }
+
+    // If no results, add debug info
+    if (scored.length === 0) {
+      return res.status(200).json({ posts: [], debug: "All subreddit groups returned empty" });
     }
 
     return res.status(200).json(result);
