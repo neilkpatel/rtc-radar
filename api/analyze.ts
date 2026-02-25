@@ -8,51 +8,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { youtubeData, redditData, trendsData } = req.body;
 
-  const systemPrompt = `You are a food trend analyst for "Respect the Chain", a food review YouTube/social media channel. The host interviews restaurant owners, celebrities, and tries their food. He operates between NYC and Boca Raton, FL.
+  const systemPrompt = `You are a food trend analyst for "Respect the Chain", a food review YouTube/social media channel. The host operates between NYC and Boca Raton, FL.
 
-Your job: Analyze data from YouTube, Reddit, and Google Trends to identify food/beverage trends that are gaining momentum but haven't gone fully viral yet. The goal is to make content BEFORE a trend peaks.
+Your job: Analyze the PROVIDED YouTube and Reddit data to identify food trends gaining momentum. Do NOT invent trends from your own knowledge — every trend MUST be grounded in the actual data provided.
 
-IMPORTANT RULES:
-- Be specific. Name actual foods, cuisines, dishes, or restaurants when possible.
-- Give actionable advice: "Film a video about X this week because Y"
-- Prioritize trends that would make good video content for a food review channel
-- Consider NYC and Boca Raton / South Florida specifically
-- Focus on the "pre-viral window" — things at 10K-100K engagement that could hit millions
-- Include a content brief for each top trend: title idea, hook, and why viewers would care
-- For each trend, recommend SPECIFIC restaurants or locations in NYC and/or Boca Raton where this trend could be filmed. Name real restaurants, neighborhoods, or food halls.
+HARD RULES:
+1. Every trend MUST have a "sources" array with 1-3 items copied from the provided data
+2. Source URLs must be EXACT URLs from the data (YouTube "url" field, Reddit "permalink" field)
+3. Source titles must be EXACT titles from the data
+4. The "platforms" array must ONLY contain "youtube", "reddit", or "google_trends" — no other values
+5. Do NOT make up trends that aren't supported by the provided data
+6. For restaurants, recommend SPECIFIC places in NYC or Boca Raton where this trend could be filmed
 
-Output your analysis as valid JSON with this exact structure:
+Output valid JSON with this exact structure:
 {
-  "summary": "2-3 sentence overview of the current food trend landscape",
+  "summary": "2-3 sentence overview",
   "topTrends": [
     {
       "trend": "Name of the trend",
-      "why": "Why this is trending and why it matters for content",
+      "why": "Why this is trending based on the data",
       "urgency": "film now" | "this week" | "watch",
-      "platforms": ["youtube", "reddit", "google_trends"],
-      "contentBrief": "Video title idea + 1-2 sentence hook for the video",
-      "restaurants": "1-3 specific restaurant/location names in NYC or Boca Raton where this could be filmed, with neighborhood",
-      "sources": [{"title": "Video or post title", "url": "full URL from the data", "platform": "youtube or reddit", "date": "Feb 22"}]
+      "platforms": ["youtube", "reddit"],
+      "contentBrief": "Video title idea + hook",
+      "restaurants": "1-3 specific restaurant names in NYC or Boca Raton with neighborhood",
+      "sources": [{"title": "EXACT title from data", "url": "EXACT url from data", "platform": "youtube", "date": "Feb 22"}]
     }
   ]
 }
 
-IMPORTANT: In the "sources" array, include the ACTUAL URLs from the YouTube and Reddit data provided. Use the video URLs (https://youtube.com/watch?v=ID) and Reddit permalink URLs exactly as given in the data. Only include sources that are directly relevant to that specific trend. Each trend should have 1-3 source links. Include the approximate publish date (e.g. "Feb 22") from the data's publishedAt or hoursOld fields.
+Return 5-8 trends ranked by urgency. Only valid JSON, no other text.`;
 
-Return 5-8 trends, ranked by urgency and content potential. Only valid JSON, no other text.`;
+  // Add URLs to YouTube data so the AI can reference them
+  const ytWithUrls = (youtubeData?.slice(0, 20) || []).map((v: any) => ({
+    ...v,
+    url: `https://youtube.com/watch?v=${v.id}`,
+  }));
 
-  const userMessage = `Here's today's data from our trend scanning:
+  const redditSlice = (redditData?.slice(0, 20) || []);
 
-YOUTUBE (top food videos gaining traction):
-${JSON.stringify(youtubeData?.slice(0, 15) || [], null, 2)}
+  const userMessage = `Here's today's data. EVERY trend you identify must reference specific items from this data with their EXACT url and title in the sources array.
 
-REDDIT (trending food posts):
-${JSON.stringify(redditData?.slice(0, 15) || [], null, 2)}
+YOUTUBE (each has a "url" field — use it in sources):
+${JSON.stringify(ytWithUrls, null, 2)}
+
+REDDIT (each has a "permalink" field — use it as the url in sources):
+${JSON.stringify(redditSlice, null, 2)}
 
 GOOGLE TRENDS:
 ${JSON.stringify(trendsData || {}, null, 2)}
 
-Analyze these signals and identify the top pre-viral food trends. Remember: the host operates in NYC and Boca Raton, FL.`;
+Identify 5-8 pre-viral food trends. The host operates in NYC and Boca Raton, FL. Remember: every trend MUST have sources with exact URLs from the data above.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -64,7 +69,7 @@ Analyze these signals and identify the top pre-viral food trends. Remember: the 
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
+        max_tokens: 4096,
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],
       }),
