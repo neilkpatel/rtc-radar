@@ -78,27 +78,47 @@ Analyze these signals and identify the top pre-viral food trends. Remember: the 
     const data = await response.json();
     let text = data.content?.[0]?.text || "{}";
 
-    // Strip markdown code fences if present (```json ... ```)
-    text = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+    // Aggressively extract JSON: strip code fences, find the outermost { }
+    text = text.replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+
+    // Find the first { and last } to extract the JSON object
+    const firstBrace = text.indexOf("{");
+    const lastBrace = text.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      text = text.slice(firstBrace, lastBrace + 1);
+    }
 
     // Parse the JSON response
+    let analysis;
     try {
-      const analysis = JSON.parse(text);
-      return res.status(200).json({
-        analysis: {
-          ...analysis,
-          generatedAt: new Date().toISOString(),
-        },
-      });
+      analysis = JSON.parse(text);
     } catch {
-      return res.status(200).json({
-        analysis: {
-          summary: text,
-          topTrends: [],
-          generatedAt: new Date().toISOString(),
-        },
-      });
+      // Try fixing common JSON issues: trailing commas, control characters
+      try {
+        const cleaned = text
+          .replace(/,\s*}/g, "}")
+          .replace(/,\s*]/g, "]")
+          .replace(/[\x00-\x1F\x7F]/g, (c) => c === "\n" || c === "\r" || c === "\t" ? c : "");
+        analysis = JSON.parse(cleaned);
+      } catch {
+        // Last resort: return raw text as summary
+        return res.status(200).json({
+          analysis: {
+            summary: "AI analysis completed but response could not be parsed. Please try scanning again.",
+            topTrends: [],
+            generatedAt: new Date().toISOString(),
+            rawResponse: text.slice(0, 200),
+          },
+        });
+      }
     }
+
+    return res.status(200).json({
+      analysis: {
+        ...analysis,
+        generatedAt: new Date().toISOString(),
+      },
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
