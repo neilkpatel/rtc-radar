@@ -60,6 +60,15 @@ export default function HowItWorks() {
               <p><span className="text-rtc-red">-40 pts</span> — Over 300K views (already viral, too late)</p>
             </div>
           </div>
+          <div>
+            <p className="text-rtc-white text-xs font-medium">Local Content Boost</p>
+            <p className="text-rtc-muted text-[11px] leading-relaxed mt-0.5">
+              Content mentioning NYC, Brooklyn, Manhattan, Queens, Boca Raton, Miami, South Florida, Fort Lauderdale, or Palm Beach gets a scoring boost.
+            </p>
+            <div className="mt-1.5 space-y-0.5 text-[10px] text-rtc-text">
+              <p><span className="text-rtc-green">+15 pts</span> — Title, description, or channel mentions a local keyword</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -112,6 +121,15 @@ export default function HowItWorks() {
               <p><span className="text-rtc-red">-40 pts</span> — Over 10K upvotes (front page, too late)</p>
             </div>
           </div>
+          <div>
+            <p className="text-rtc-white text-xs font-medium">Local Content Boost</p>
+            <p className="text-rtc-muted text-[11px] leading-relaxed mt-0.5">
+              Posts from local subreddits (FoodNYC, nyceats, Brooklyn, SouthFlorida, Miami, etc.) or mentioning local keywords get a scoring boost.
+            </p>
+            <div className="mt-1.5 space-y-0.5 text-[10px] text-rtc-text">
+              <p><span className="text-rtc-green">+15 pts</span> — Local subreddit or title mentions NYC/South Florida area</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -121,11 +139,11 @@ export default function HowItWorks() {
         <div className="space-y-2 text-xs">
           <div>
             <p className="text-rtc-white font-medium">YouTube</p>
-            <p className="text-rtc-muted text-[11px]">Searches 12 food queries (food review, restaurant review, food trend, new food, viral food, best restaurants, food challenge, street food, NYC restaurant, Boca Raton food, celebrity chef, mukbang). Fetches video stats + channel subscriber counts. Last 7 days.</p>
+            <p className="text-rtc-muted text-[11px]">Searches 19 queries — 7 national (food review, restaurant review, food trend, viral food, street food, celebrity chef, mukbang) + 6 NYC (NYC food, NYC restaurant review, Brooklyn food, Manhattan restaurant, NYC street food, Queens food) + 6 South Florida (Boca Raton food, Boca Raton restaurant, Miami food, South Florida restaurant, Fort Lauderdale food). Last 7 days.</p>
           </div>
           <div>
             <p className="text-rtc-white font-medium">Reddit</p>
-            <p className="text-rtc-muted text-[11px]">Scans 19 subreddits including food (r/food, r/FoodPorn, r/streetfood, r/Cooking, r/fastfood, r/Pizza, r/burgers, r/tacos, r/ramen, r/sushi) and local markets (r/FoodNYC, r/nyceats, r/Brooklyn, r/SouthFlorida, r/Miami, r/florida). Hot posts from past week.</p>
+            <p className="text-rtc-muted text-[11px]">Scans 22 subreddits — food (r/food, r/FoodPorn, r/streetfood, r/Cooking, r/fastfood, r/restaurant, r/Pizza, r/burgers, r/tacos, r/ramen, r/sushi, r/eatsandwiches, r/foodhacks) + NYC (r/FoodNYC, r/nyceats, r/Brooklyn, r/newyorkcity, r/AskNYC) + South Florida (r/SouthFlorida, r/Miami, r/florida, r/fortlauderdale, r/BocaRaton). Hot posts from past week.</p>
           </div>
           <div>
             <p className="text-rtc-white font-medium">Google Trends</p>

@@ -21,12 +21,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Use multi-subreddit queries to reduce request count (Reddit rate-limits aggressively)
     const subredditGroups = [
+      // National food
       "food+FoodPorn+streetfood",
       "Cooking+fastfood+restaurant",
       "Pizza+burgers+tacos",
       "ramen+sushi+eatsandwiches+foodhacks",
-      "FoodNYC+nyceats+Brooklyn",
-      "SouthFlorida+Miami+florida",
+      // NYC local
+      "FoodNYC+nyceats+Brooklyn+newyorkcity+AskNYC",
+      // South Florida local
+      "SouthFlorida+Miami+florida+fortlauderdale+BocaRaton",
     ];
 
     const allPosts: RedditPost[] = [];
@@ -100,6 +103,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (p.score >= 50 && p.score <= 2000) viralityScore += 25;
       // Rising posts get a boost — this is the gold
       if (p.score < 300 && velocity > 15) viralityScore += 25;
+      // Local content boost — NYC and South Florida get priority
+      const text = `${p.title} ${p.selftext} ${p.subreddit}`.toLowerCase();
+      const localKeywords = ["nyc", "new york", "brooklyn", "manhattan", "queens", "bronx", "harlem", "boca raton", "boca", "miami", "south florida", "fort lauderdale", "delray", "palm beach", "dade"];
+      const localSubs = ["foodnyc", "nyceats", "brooklyn", "newyorkcity", "asknyc", "southflorida", "miami", "florida", "fortlauderdale", "bocaraton"];
+      if (localKeywords.some(kw => text.includes(kw)) || localSubs.includes(p.subreddit.toLowerCase())) viralityScore += 15;
 
       return {
         ...p,

@@ -22,18 +22,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Search for recent food/beverage videos
     const queries = [
+      // National food trends
       "food review",
       "restaurant review",
       "food trend",
-      "new food",
       "viral food",
-      "best restaurants",
-      "food challenge",
       "street food",
-      "NYC restaurant",
-      "Boca Raton food",
       "celebrity chef",
       "mukbang",
+      // NYC local
+      "NYC food",
+      "NYC restaurant review",
+      "Brooklyn food",
+      "Manhattan restaurant",
+      "NYC street food",
+      "Queens food",
+      // South Florida local
+      "Boca Raton food",
+      "Boca Raton restaurant",
+      "Miami food",
+      "South Florida restaurant",
+      "Fort Lauderdale food",
     ];
 
     const allVideos: YouTubeVideo[] = [];
@@ -126,6 +135,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (v.viewCount >= 10000 && v.viewCount <= 50000) viralityScore += 30;      // bullseye
       else if (v.viewCount >= 3000 && v.viewCount < 10000) viralityScore += 20;   // early but real
       else if (v.viewCount > 50000 && v.viewCount <= 100000) viralityScore += 15; // still pre-viral
+      // Local content boost — NYC and South Florida get priority
+      const text = `${v.title} ${v.description} ${v.channelTitle}`.toLowerCase();
+      const localKeywords = ["nyc", "new york", "brooklyn", "manhattan", "queens", "bronx", "harlem", "boca raton", "boca", "miami", "south florida", "fort lauderdale", "delray", "palm beach", "dade"];
+      if (localKeywords.some(kw => text.includes(kw))) viralityScore += 15;
 
       return {
         ...v,
