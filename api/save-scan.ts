@@ -10,6 +10,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { youtubeData, redditData, trendsData, analysis } = req.body;
 
+  // Don't save empty scans — they overwrite good data
+  if ((!youtubeData || youtubeData.length === 0) && (!redditData || redditData.length === 0)) {
+    return res.status(200).json({ saved: false, reason: "no data to save" });
+  }
+
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   const filmNowCount = analysis?.topTrends?.filter((t: any) => t.urgency === "film now").length || 0;

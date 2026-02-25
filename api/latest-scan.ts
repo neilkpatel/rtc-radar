@@ -10,9 +10,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // Find the most recent scan that actually has data
   const { data, error } = await supabase
     .from("scans")
     .select("*")
+    .or("youtube_data.neq.[],reddit_data.neq.[]")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
