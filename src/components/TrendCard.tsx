@@ -107,7 +107,8 @@ export default function TrendCard({
             {likes !== undefined && likes > 0 && <span>{fmtNum(likes)} likes</span>}
             {comments !== undefined && comments > 0 && <span>{fmtNum(comments)} comments</span>}
             <span>{velocity}/hr</span>
-            <span>{hoursOld}h ago</span>
+            <span>{hoursOld < 48 ? `${hoursOld}h ago` : `${Math.round(hoursOld / 24)}d ago`}</span>
+            <span>{new Date(Date.now() - hoursOld * 3600000).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
           </div>
         </div>
       </div>

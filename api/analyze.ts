@@ -32,12 +32,12 @@ Output your analysis as valid JSON with this exact structure:
       "platforms": ["youtube", "reddit", "google_trends"],
       "contentBrief": "Video title idea + 1-2 sentence hook for the video",
       "restaurants": "1-3 specific restaurant/location names in NYC or Boca Raton where this could be filmed, with neighborhood",
-      "sources": [{"title": "Video or post title", "url": "full URL from the data", "platform": "youtube or reddit"}]
+      "sources": [{"title": "Video or post title", "url": "full URL from the data", "platform": "youtube or reddit", "date": "Feb 22"}]
     }
   ]
 }
 
-IMPORTANT: In the "sources" array, include the ACTUAL URLs from the YouTube and Reddit data provided. Use the video URLs (https://youtube.com/watch?v=ID) and Reddit permalink URLs exactly as given in the data. Only include sources that are directly relevant to that specific trend. Each trend should have 1-3 source links.
+IMPORTANT: In the "sources" array, include the ACTUAL URLs from the YouTube and Reddit data provided. Use the video URLs (https://youtube.com/watch?v=ID) and Reddit permalink URLs exactly as given in the data. Only include sources that are directly relevant to that specific trend. Each trend should have 1-3 source links. Include the approximate publish date (e.g. "Feb 22") from the data's publishedAt or hoursOld fields.
 
 Return 5-8 trends, ranked by urgency and content potential. Only valid JSON, no other text.`;
 

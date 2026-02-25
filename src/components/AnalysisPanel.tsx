@@ -121,6 +121,9 @@ export default function AnalysisPanel({
                     <span className="text-rtc-text text-xs group-hover:text-rtc-orange transition-colors truncate">
                       {src.title}
                     </span>
+                    {src.date && (
+                      <span className="text-rtc-muted text-[10px] flex-shrink-0">{src.date}</span>
+                    )}
                   </a>
                 ))}
               </div>
