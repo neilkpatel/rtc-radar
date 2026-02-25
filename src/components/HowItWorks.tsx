@@ -48,13 +48,15 @@ export default function HowItWorks() {
             </div>
           </div>
           <div>
-            <p className="text-rtc-white text-xs font-medium">Pre-Viral Sweet Spot (3K-100K views)</p>
+            <p className="text-rtc-white text-xs font-medium">Pre-Viral Sweet Spot (peaks around 25K views)</p>
             <p className="text-rtc-muted text-[11px] leading-relaxed mt-0.5">
-              The golden window. Enough traction to be real, early enough to beat everyone else.
+              Weighted scoring that peaks around 25K views — the bullseye for pre-viral content. Early enough to beat everyone, real enough to be a signal.
             </p>
             <div className="mt-1.5 space-y-0.5 text-[10px] text-rtc-text">
-              <p><span className="text-rtc-green">+25 pts</span> — In the 3K-100K pre-viral sweet spot</p>
-              <p><span className="text-rtc-orange">-15 pts</span> — 150K-300K views (getting late)</p>
+              <p><span className="text-rtc-green">+30 pts</span> — 10K-50K views (bullseye)</p>
+              <p><span className="text-rtc-green">+20 pts</span> — 3K-10K views (early but real)</p>
+              <p><span className="text-rtc-muted">+15 pts</span> — 50K-100K views (still pre-viral)</p>
+              <p><span className="text-rtc-orange">-15 pts</span> — 100K-300K views (getting late)</p>
               <p><span className="text-rtc-red">-40 pts</span> — Over 300K views (already viral, too late)</p>
             </div>
           </div>

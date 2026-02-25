@@ -121,9 +121,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       else if (engagementRate > 0.04) viralityScore += 10;
       // Already viral = not useful (harsh penalty)
       if (v.viewCount > 300_000) viralityScore -= 40;
-      else if (v.viewCount > 150_000) viralityScore -= 15;
-      // Pre-viral sweet spot: 3K-100K views
-      if (v.viewCount >= 3000 && v.viewCount <= 100000) viralityScore += 25;
+      else if (v.viewCount > 100_000) viralityScore -= 15;
+      // Weighted pre-viral sweet spot (peaks around 25K)
+      if (v.viewCount >= 10000 && v.viewCount <= 50000) viralityScore += 30;      // bullseye
+      else if (v.viewCount >= 3000 && v.viewCount < 10000) viralityScore += 20;   // early but real
+      else if (v.viewCount > 50000 && v.viewCount <= 100000) viralityScore += 15; // still pre-viral
 
       return {
         ...v,
