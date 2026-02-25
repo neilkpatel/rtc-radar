@@ -33,10 +33,6 @@ export default function ScanHistory() {
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<"scans" | "alerts">("scans");
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
   const fetchHistory = async () => {
     setLoading(true);
     try {
@@ -49,6 +45,10 @@ export default function ScanHistory() {
     } catch { /* */ }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
   if (loading) {
     return (

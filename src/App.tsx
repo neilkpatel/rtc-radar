@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import PasswordGate from "./components/PasswordGate";
 import TrendCard from "./components/TrendCard";
 import AnalysisPanel from "./components/AnalysisPanel";
@@ -28,6 +28,24 @@ export default function App() {
 
   // Scan progress messages
   const [scanStatus, setScanStatus] = useState("");
+  const [lastScanTime, setLastScanTime] = useState<string | null>(null);
+
+  // Load latest scan on mount
+  useEffect(() => {
+    if (!authed) return;
+    fetch("/api/latest-scan")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.scan) {
+          setYoutubeData(data.scan.youtubeData || []);
+          setRedditData(data.scan.redditData || []);
+          setTrendsData(data.scan.trendsData || { dailyTrends: [], foodTrends: [] });
+          setAnalysis(data.scan.analysis || null);
+          setLastScanTime(data.scan.createdAt);
+        }
+      })
+      .catch(() => {});
+  }, [authed]);
 
   const fetchYouTube = useCallback(async () => {
     setLoadingYT(true);
@@ -77,6 +95,7 @@ export default function App() {
 
   const runAnalysis = useCallback(async (yt: any[], reddit: any[], trends: any) => {
     setLoadingAnalysis(true);
+    let result = null;
     try {
       const resp = await fetch("/api/analyze", {
         method: "POST",
@@ -90,9 +109,11 @@ export default function App() {
       if (resp.ok) {
         const data = await resp.json();
         setAnalysis(data.analysis);
+        result = data.analysis;
       }
     } catch { /* */ }
     setLoadingAnalysis(false);
+    return result;
   }, []);
 
   // Full scan: fetch all sources then run AI analysis
@@ -114,7 +135,22 @@ export default function App() {
     setScanStatus("Running AI analysis...");
 
     // Run AI analysis on the results
-    await runAnalysis(yt, reddit, trends);
+    const analysisResult = await runAnalysis(yt, reddit, trends);
+
+    // Save scan to Supabase for persistence
+    setScanStatus("Saving results...");
+    fetch("/api/save-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        youtubeData: yt,
+        redditData: reddit,
+        trendsData: trends,
+        analysis: analysisResult,
+      }),
+    }).catch(() => {});
+
+    setLastScanTime(new Date().toISOString());
     setScanStatus("");
     setScanning(false);
   }, [fetchYouTube, fetchReddit, fetchTrends, runAnalysis]);
@@ -140,6 +176,11 @@ export default function App() {
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-rtc-orange tracking-tight">RTC Radar</h1>
             <span className="text-rtc-muted text-xs hidden md:inline">Respect the Chain — Trend Detection</span>
+            {lastScanTime && !scanning && (
+              <span className="text-rtc-muted text-[10px] hidden lg:inline">
+                Last scan: {new Date(lastScanTime).toLocaleString()}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             {scanning && scanStatus && (
