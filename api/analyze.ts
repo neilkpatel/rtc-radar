@@ -71,7 +71,10 @@ Analyze these signals and identify the top pre-viral food trends. Remember: the 
     }
 
     const data = await response.json();
-    const text = data.content?.[0]?.text || "{}";
+    let text = data.content?.[0]?.text || "{}";
+
+    // Strip markdown code fences if present (```json ... ```)
+    text = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
     // Parse the JSON response
     try {
