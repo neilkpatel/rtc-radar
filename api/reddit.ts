@@ -25,6 +25,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       "Cooking+fastfood+restaurant",
       "Pizza+burgers+tacos",
       "ramen+sushi+eatsandwiches+foodhacks",
+      "FoodNYC+nyceats+Brooklyn",
+      "SouthFlorida+Miami+florida",
     ];
 
     const allPosts: RedditPost[] = [];
@@ -91,10 +93,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Comment engagement
       const commentRatio = p.numComments / Math.max(p.score, 1);
       if (commentRatio > 0.1) viralityScore += 15;
-      // Sweet spot: gaining traction but not front page yet
-      if (p.score >= 100 && p.score <= 5000) viralityScore += 20;
-      // Rising posts get a boost
-      if (p.score < 500 && velocity > 30) viralityScore += 20;
+      // Already front page = too late (harsh penalty)
+      if (p.score > 10000) viralityScore -= 40;
+      else if (p.score > 5000) viralityScore -= 15;
+      // Pre-viral sweet spot: 50-2K upvotes
+      if (p.score >= 50 && p.score <= 2000) viralityScore += 25;
+      // Rising posts get a boost — this is the gold
+      if (p.score < 300 && velocity > 15) viralityScore += 25;
 
       return {
         ...p,

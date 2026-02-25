@@ -30,6 +30,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       "best restaurants",
       "food challenge",
       "street food",
+      "NYC restaurant",
+      "Boca Raton food",
+      "celebrity chef",
+      "mukbang",
     ];
 
     const allVideos: YouTubeVideo[] = [];
@@ -115,10 +119,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const engagementRate = (v.likeCount + v.commentCount) / Math.max(v.viewCount, 1);
       if (engagementRate > 0.08) viralityScore += 20;
       else if (engagementRate > 0.04) viralityScore += 10;
-      // Not already mega-viral
-      if (v.viewCount > 1_000_000) viralityScore -= 20;
-      // Sweet spot: 10K-200K views
-      if (v.viewCount >= 10000 && v.viewCount <= 200000) viralityScore += 20;
+      // Already viral = not useful (harsh penalty)
+      if (v.viewCount > 300_000) viralityScore -= 40;
+      else if (v.viewCount > 150_000) viralityScore -= 15;
+      // Pre-viral sweet spot: 3K-100K views
+      if (v.viewCount >= 3000 && v.viewCount <= 100000) viralityScore += 25;
 
       return {
         ...v,

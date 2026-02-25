@@ -48,13 +48,14 @@ export default function HowItWorks() {
             </div>
           </div>
           <div>
-            <p className="text-rtc-white text-xs font-medium">Sweet Spot (10K-200K views)</p>
+            <p className="text-rtc-white text-xs font-medium">Pre-Viral Sweet Spot (3K-100K views)</p>
             <p className="text-rtc-muted text-[11px] leading-relaxed mt-0.5">
-              This is the pre-viral window. Enough traction to be real, but not yet mainstream.
+              The golden window. Enough traction to be real, early enough to beat everyone else.
             </p>
             <div className="mt-1.5 space-y-0.5 text-[10px] text-rtc-text">
-              <p><span className="text-rtc-green">+20 pts</span> — In the 10K-200K sweet spot</p>
-              <p><span className="text-rtc-red">-20 pts</span> — Over 1M views (already viral, too late)</p>
+              <p><span className="text-rtc-green">+25 pts</span> — In the 3K-100K pre-viral sweet spot</p>
+              <p><span className="text-rtc-orange">-15 pts</span> — 150K-300K views (getting late)</p>
+              <p><span className="text-rtc-red">-40 pts</span> — Over 300K views (already viral, too late)</p>
             </div>
           </div>
         </div>
@@ -98,13 +99,15 @@ export default function HowItWorks() {
             </div>
           </div>
           <div>
-            <p className="text-rtc-white text-xs font-medium">Sweet Spot + Rising Boost</p>
+            <p className="text-rtc-white text-xs font-medium">Pre-Viral Sweet Spot + Rising Boost</p>
             <p className="text-rtc-muted text-[11px] leading-relaxed mt-0.5">
-              Posts with 100-5K upvotes are trending but not front page yet. Under 500 upvotes with high velocity means a post is catching fire.
+              Posts with 50-2K upvotes are trending but not front page yet. Under 300 upvotes with high velocity means a post is catching fire — this is the gold.
             </p>
             <div className="mt-1.5 space-y-0.5 text-[10px] text-rtc-text">
-              <p><span className="text-rtc-green">+20 pts</span> — 100-5,000 upvotes (trending)</p>
-              <p><span className="text-rtc-green">+20 pts</span> — Under 500 upvotes but 30+ velocity (catching fire)</p>
+              <p><span className="text-rtc-green">+25 pts</span> — 50-2,000 upvotes (pre-viral)</p>
+              <p><span className="text-rtc-green">+25 pts</span> — Under 300 upvotes but 15+ velocity (catching fire)</p>
+              <p><span className="text-rtc-orange">-15 pts</span> — 5K-10K upvotes (getting late)</p>
+              <p><span className="text-rtc-red">-40 pts</span> — Over 10K upvotes (front page, too late)</p>
             </div>
           </div>
         </div>
@@ -116,11 +119,11 @@ export default function HowItWorks() {
         <div className="space-y-2 text-xs">
           <div>
             <p className="text-rtc-white font-medium">YouTube</p>
-            <p className="text-rtc-muted text-[11px]">Searches 8 food queries (food review, restaurant review, food trend, new food, viral food, best restaurants, food challenge, street food). Fetches video stats + channel subscriber counts. Last 7 days.</p>
+            <p className="text-rtc-muted text-[11px]">Searches 12 food queries (food review, restaurant review, food trend, new food, viral food, best restaurants, food challenge, street food, NYC restaurant, Boca Raton food, celebrity chef, mukbang). Fetches video stats + channel subscriber counts. Last 7 days.</p>
           </div>
           <div>
             <p className="text-rtc-white font-medium">Reddit</p>
-            <p className="text-rtc-muted text-[11px]">Scans 13 food subreddits (r/food, r/FoodPorn, r/streetfood, r/Cooking, r/fastfood, r/restaurant, r/Pizza, r/burgers, r/tacos, r/ramen, r/sushi, r/eatsandwiches, r/foodhacks). Hot posts from past week.</p>
+            <p className="text-rtc-muted text-[11px]">Scans 19 subreddits including food (r/food, r/FoodPorn, r/streetfood, r/Cooking, r/fastfood, r/Pizza, r/burgers, r/tacos, r/ramen, r/sushi) and local markets (r/FoodNYC, r/nyceats, r/Brooklyn, r/SouthFlorida, r/Miami, r/florida). Hot posts from past week.</p>
           </div>
           <div>
             <p className="text-rtc-white font-medium">Google Trends</p>
