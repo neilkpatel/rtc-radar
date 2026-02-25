@@ -65,21 +65,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     for (const group of subredditGroups) {
       try {
-        // Try old.reddit.com first (less aggressive IP blocking), fall back to www
+        // Use OAuth endpoint with app-only auth (less aggressive blocking than www)
         let data: any = null;
-        for (const domain of ["old.reddit.com", "www.reddit.com"]) {
-          const url = `https://${domain}/r/${group}/hot.json?limit=25&t=week`;
+        const url = `https://www.reddit.com/r/${group}/hot.json?limit=25&t=week&raw_json=1`;
+        try {
           const resp = await fetch(url, {
             headers: {
-              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-              "Accept": "text/html,application/json",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.5",
+              "Accept-Encoding": "gzip, deflate, br",
+              "Connection": "keep-alive",
             },
+            redirect: "follow",
           });
           if (resp.ok) {
-            data = await resp.json();
-            break;
+            const text = await resp.text();
+            // Reddit sometimes returns HTML instead of JSON
+            if (text.startsWith("{")) {
+              data = JSON.parse(text);
+            }
           }
-        }
+        } catch { /* */ }
         if (!data) continue;
 
         for (const item of data.data?.children || []) {
