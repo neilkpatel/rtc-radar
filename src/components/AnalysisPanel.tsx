@@ -98,13 +98,41 @@ export default function AnalysisPanel({
             </div>
           )}
 
-          {/* Platform badges */}
-          <div className="flex gap-1.5">
-            {trend.platforms.map(p => (
-              <span key={p} className="text-[10px] text-rtc-muted bg-rtc-dark px-2 py-0.5 rounded">
-                {platformLabel(p)}
-              </span>
-            ))}
+          {/* Platform badges + search links */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1.5">
+              {trend.platforms.map(p => (
+                <span key={p} className="text-[10px] text-rtc-muted bg-rtc-dark px-2 py-0.5 rounded">
+                  {platformLabel(p)}
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <a
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(trend.trend + " food")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-rtc-red hover:text-rtc-red/80 transition-colors"
+              >
+                YouTube
+              </a>
+              <a
+                href={`https://www.reddit.com/search/?q=${encodeURIComponent(trend.trend)}&type=link&sort=new`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-rtc-orange hover:text-rtc-orange/80 transition-colors"
+              >
+                Reddit
+              </a>
+              <a
+                href={`https://www.google.com/search?q=${encodeURIComponent(trend.trend + " food trend")}&tbm=nws`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-rtc-blue hover:text-rtc-blue/80 transition-colors"
+              >
+                Google
+              </a>
+            </div>
           </div>
         </div>
       ))}

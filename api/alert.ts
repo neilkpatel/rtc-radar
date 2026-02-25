@@ -20,24 +20,18 @@ async function getAccessToken(): Promise<string> {
 
 // Send email via Gmail API
 async function sendGmail(accessToken: string, to: string[], subject: string, html: string) {
-  const boundary = "boundary_rtc_" + Date.now();
-  const toHeader = to.join(", ");
+  const toHeader = to.map(e => e.trim()).join(", ");
 
   const mimeMessage = [
     `To: ${toHeader}`,
     `Subject: ${subject}`,
     `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    ``,
-    `--${boundary}`,
     `Content-Type: text/html; charset="UTF-8"`,
-    `Content-Transfer-Encoding: base64`,
     ``,
-    Buffer.from(html).toString("base64"),
-    `--${boundary}--`,
+    html,
   ].join("\r\n");
 
-  // Gmail API expects base64url encoding
+  // Gmail API expects the entire message as base64url
   const encodedMessage = Buffer.from(mimeMessage)
     .toString("base64")
     .replace(/\+/g, "-")

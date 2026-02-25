@@ -41,6 +41,7 @@ export interface TrendAnalysis {
     platforms: Platform[];
     contentBrief: string;
     restaurants?: string;
+    sources?: { title: string; url: string; platform: string }[];
   }[];
   generatedAt: string;
 }
