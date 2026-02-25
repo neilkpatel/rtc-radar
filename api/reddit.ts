@@ -60,14 +60,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ];
 
     const allPosts: RedditPost[] = [];
-    const weekAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+    const errors: string[] = [];
 
     for (const group of subredditGroups) {
       try {
-        const url = `https://api.pullpush.io/reddit/search/submission/?subreddit=${group}&size=25&sort=desc&sort_type=score&after=${weekAgo}`;
+        const url = `https://api.pullpush.io/reddit/search/submission/?subreddit=${group}&size=25&sort=desc&sort_type=score`;
         const resp = await fetch(url);
-        if (!resp.ok) continue;
-        const data = await resp.json();
+        if (!resp.ok) {
+          errors.push(`${group}: HTTP ${resp.status}`);
+          continue;
+        }
+        const text = await resp.text();
+        if (!text.startsWith("{")) {
+          errors.push(`${group}: not JSON`);
+          continue;
+        }
+        const data = JSON.parse(text);
 
         for (const post of data.data || []) {
           if (!post || post.stickied) continue;
@@ -144,6 +152,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from("cache")
           .upsert({ key: "reddit", data: result, updated_at: new Date().toISOString() });
       } catch { /* cache write failed, not critical */ }
+    }
+
+    // If no results, return debug info
+    if (scored.length === 0) {
+      return res.status(200).json({ posts: [], debug: errors.length > 0 ? errors : "No posts found" });
     }
 
     return res.status(200).json(result);
