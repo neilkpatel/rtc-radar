@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { createClient } from "@supabase/supabase-js";
 
 interface RedditPost {
   id: string;
@@ -15,11 +16,39 @@ interface RedditPost {
   upvoteRatio: number;
 }
 
+const CACHE_HOURS = 3;
+
+function getSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
+  const supabase = getSupabase();
+
+  // Check cache first
+  if (supabase) {
+    try {
+      const { data: cached } = await supabase
+        .from("cache")
+        .select("data, updated_at")
+        .eq("key", "reddit")
+        .maybeSingle();
+
+      if (cached?.data && cached.updated_at) {
+        const age = (Date.now() - new Date(cached.updated_at).getTime()) / (1000 * 60 * 60);
+        if (age < CACHE_HOURS) {
+          return res.status(200).json(cached.data);
+        }
+      }
+    } catch { /* cache miss */ }
+  }
+
   try {
-    // Use multi-subreddit queries to reduce request count (Reddit rate-limits aggressively)
     const subredditGroups = [
       // National food
       "food+FoodPorn+streetfood",
@@ -36,7 +65,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     for (const group of subredditGroups) {
       try {
-        // Fetch hot posts from each group (combined subreddit query)
         const url = `https://www.reddit.com/r/${group}/hot.json?limit=25&t=week`;
         const resp = await fetch(url, {
           headers: { "User-Agent": "RTCRadarBot/1.0 (food trend analysis tool)" },
@@ -64,10 +92,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
 
-        // Small delay to avoid rate limiting
         await new Promise(r => setTimeout(r, 200));
       } catch {
-        // Skip failed groups
         continue;
       }
     }
@@ -86,24 +112,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const velocity = p.score / Math.max(hoursOld, 1);
 
       let viralityScore = 0;
-      // Upvote velocity (score per hour)
       if (velocity > 100) viralityScore += 30;
       else if (velocity > 50) viralityScore += 20;
       else if (velocity > 20) viralityScore += 10;
-      // High upvote ratio = genuine engagement
       if (p.upvoteRatio > 0.95) viralityScore += 15;
       else if (p.upvoteRatio > 0.90) viralityScore += 10;
-      // Comment engagement
       const commentRatio = p.numComments / Math.max(p.score, 1);
       if (commentRatio > 0.1) viralityScore += 15;
-      // Already front page = too late (harsh penalty)
       if (p.score > 10000) viralityScore -= 40;
       else if (p.score > 5000) viralityScore -= 15;
-      // Pre-viral sweet spot: 50-2K upvotes
       if (p.score >= 50 && p.score <= 2000) viralityScore += 25;
-      // Rising posts get a boost — this is the gold
       if (p.score < 300 && velocity > 15) viralityScore += 25;
-      // Local content boost — NYC and South Florida get priority
+      // Local content boost
       const text = `${p.title} ${p.selftext} ${p.subreddit}`.toLowerCase();
       const localKeywords = ["nyc", "new york", "brooklyn", "manhattan", "queens", "bronx", "harlem", "boca raton", "boca", "miami", "south florida", "fort lauderdale", "delray", "palm beach", "dade"];
       const localSubs = ["foodnyc", "nyceats", "brooklyn", "newyorkcity", "asknyc", "southflorida", "miami", "florida", "fortlauderdale", "bocaraton"];
@@ -119,8 +139,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     scored.sort((a, b) => b.viralityScore - a.viralityScore);
 
-    return res.status(200).json({ posts: scored.slice(0, 30) });
+    const result = { posts: scored.slice(0, 30) };
+
+    // Save to cache
+    if (supabase && scored.length > 0) {
+      await supabase
+        .from("cache")
+        .upsert({ key: "reddit", data: result, updated_at: new Date().toISOString() })
+        .catch(() => {});
+    }
+
+    return res.status(200).json(result);
   } catch (err: any) {
+    // On error, return stale cache
+    if (supabase) {
+      try {
+        const { data: cached } = await supabase
+          .from("cache")
+          .select("data")
+          .eq("key", "reddit")
+          .maybeSingle();
+        if (cached?.data) return res.status(200).json(cached.data);
+      } catch { /* */ }
+    }
     return res.status(500).json({ error: err.message });
   }
 }
