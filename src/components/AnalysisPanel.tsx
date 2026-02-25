@@ -74,7 +74,7 @@ export default function AnalysisPanel({
       </div>
 
       {/* Trend Cards */}
-      {analysis.topTrends.map((trend, i) => (
+      {(analysis.topTrends || []).map((trend, i) => (
         <div key={i} className="bg-rtc-card border border-rtc-border rounded-lg p-4">
           <div className="flex items-start justify-between gap-3 mb-2">
             <h4 className="text-rtc-white font-semibold text-sm">{trend.trend}</h4>
@@ -132,7 +132,7 @@ export default function AnalysisPanel({
 
           {/* Platform badges */}
           <div className="flex gap-1.5">
-            {trend.platforms.map(p => (
+            {(trend.platforms || []).map(p => (
               <span key={p} className="text-[10px] text-rtc-muted bg-rtc-dark px-2 py-0.5 rounded">
                 {platformLabel(p)}
               </span>
