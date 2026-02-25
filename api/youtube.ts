@@ -170,10 +170,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Save to cache (only if we got results)
     if (supabase && scored.length > 0) {
-      await supabase
-        .from("cache")
-        .upsert({ key: "youtube", data: result, updated_at: new Date().toISOString() })
-        .catch(() => {});
+      try {
+        await supabase
+          .from("cache")
+          .upsert({ key: "youtube", data: result, updated_at: new Date().toISOString() });
+      } catch { /* cache write failed, not critical */ }
     }
 
     return res.status(200).json(result);
