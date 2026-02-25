@@ -90,6 +90,14 @@ export default function AnalysisPanel({
             <p className="text-rtc-text text-xs mt-1 leading-relaxed">{trend.contentBrief}</p>
           </div>
 
+          {/* Restaurant recommendations */}
+          {trend.restaurants && (
+            <div className="bg-emerald-950/30 border border-emerald-800/30 rounded p-3 mb-2">
+              <span className="text-rtc-green text-[10px] font-semibold uppercase tracking-wide">Where to Film</span>
+              <p className="text-rtc-text text-xs mt-1 leading-relaxed">{trend.restaurants}</p>
+            </div>
+          )}
+
           {/* Platform badges */}
           <div className="flex gap-1.5">
             {trend.platforms.map(p => (

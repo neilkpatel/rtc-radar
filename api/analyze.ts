@@ -19,6 +19,7 @@ IMPORTANT RULES:
 - Consider NYC and Boca Raton / South Florida specifically
 - Focus on the "pre-viral window" — things at 10K-100K engagement that could hit millions
 - Include a content brief for each top trend: title idea, hook, and why viewers would care
+- For each trend, recommend SPECIFIC restaurants or locations in NYC and/or Boca Raton where this trend could be filmed. Name real restaurants, neighborhoods, or food halls.
 
 Output your analysis as valid JSON with this exact structure:
 {
@@ -29,7 +30,8 @@ Output your analysis as valid JSON with this exact structure:
       "why": "Why this is trending and why it matters for content",
       "urgency": "film now" | "this week" | "watch",
       "platforms": ["youtube", "reddit", "google_trends"],
-      "contentBrief": "Video title idea + 1-2 sentence hook for the video"
+      "contentBrief": "Video title idea + 1-2 sentence hook for the video",
+      "restaurants": "1-3 specific restaurant/location names in NYC or Boca Raton where this could be filmed, with neighborhood"
     }
   ]
 }

@@ -40,6 +40,7 @@ export interface TrendAnalysis {
     urgency: "film now" | "this week" | "watch";
     platforms: Platform[];
     contentBrief: string;
+    restaurants?: string;
   }[];
   generatedAt: string;
 }

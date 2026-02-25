@@ -5,14 +5,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Google Trends doesn't have an official API, but we can use the
-    // daily trending searches endpoint and the related queries endpoint
-    // For now, we'll use the public trending searches endpoint
-
+    // daily trending searches endpoint
     // Fetch daily trending searches (US)
     const trendingUrl = "https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=-300&geo=US&ns=15";
     const trendingResp = await fetch(trendingUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://trends.google.com/trending?geo=US",
       },
     });
 
@@ -39,41 +40,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Also search for food-specific trends using the explore endpoint
-    const foodKeywords = [
-      "viral food", "food trend", "new restaurant",
-      "best pizza", "ramen", "Nashville hot chicken",
-      "birria tacos", "smash burger", "boba",
-      "Korean BBQ", "omakase", "food review",
-    ];
-
-    // For each keyword, check if it's trending via autocomplete suggest
-    const suggestions: { keyword: string; rising: boolean }[] = [];
-    for (const kw of foodKeywords) {
-      try {
-        const suggestUrl = `https://trends.google.com/trends/api/autocomplete/${encodeURIComponent(kw)}?hl=en-US`;
-        const suggestResp = await fetch(suggestUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-          },
-        });
-        if (suggestResp.ok) {
-          const text = await suggestResp.text();
-          const jsonStr = text.replace(/^\)\]\}'\n/, "");
-          const data = JSON.parse(jsonStr);
-          const topics = data.default?.topics || [];
-          for (const topic of topics.slice(0, 3)) {
-            suggestions.push({
-              keyword: topic.title || kw,
-              rising: true,
-            });
-          }
-        }
-      } catch {
-        continue;
-      }
-    }
-
     // Filter daily trends for food-related items
     const foodTerms = [
       "food", "restaurant", "pizza", "burger", "taco", "sushi", "ramen",
@@ -93,7 +59,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       dailyTrends: dailyTrends.slice(0, 20),
       foodTrends: foodRelated,
-      foodKeywordSuggestions: suggestions,
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

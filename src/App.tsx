@@ -3,9 +3,11 @@ import PasswordGate from "./components/PasswordGate";
 import TrendCard from "./components/TrendCard";
 import AnalysisPanel from "./components/AnalysisPanel";
 import GoogleTrendsPanel from "./components/GoogleTrendsPanel";
+import ContentCalendar from "./components/ContentCalendar";
+import ScanHistory from "./components/ScanHistory";
 import type { TrendAnalysis } from "./lib/types";
 
-type Tab = "analysis" | "youtube" | "reddit" | "trends";
+type Tab = "analysis" | "youtube" | "reddit" | "trends" | "calendar" | "history";
 
 export default function App() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem("rtc_auth") === "1");
@@ -23,6 +25,9 @@ export default function App() {
   const [loadingTrends, setLoadingTrends] = useState(false);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [scanning, setScanning] = useState(false);
+
+  // Scan progress messages
+  const [scanStatus, setScanStatus] = useState("");
 
   const fetchYouTube = useCallback(async () => {
     setLoadingYT(true);
@@ -94,6 +99,7 @@ export default function App() {
   const handleFullScan = useCallback(async () => {
     setScanning(true);
     setActiveTab("analysis");
+    setScanStatus("Scanning YouTube, Reddit, and Google Trends...");
 
     // Fetch all sources in parallel
     const [yt, reddit, trends] = await Promise.all([
@@ -105,8 +111,11 @@ export default function App() {
     setLoadingYT(false);
     setLoadingReddit(false);
 
+    setScanStatus("Running AI analysis...");
+
     // Run AI analysis on the results
     await runAnalysis(yt, reddit, trends);
+    setScanStatus("");
     setScanning(false);
   }, [fetchYouTube, fetchReddit, fetchTrends, runAnalysis]);
 
@@ -119,6 +128,8 @@ export default function App() {
     { key: "youtube", label: "YouTube", count: youtubeData.length },
     { key: "reddit", label: "Reddit", count: redditData.length },
     { key: "trends", label: "Google Trends" },
+    { key: "calendar", label: "Calendar" },
+    { key: "history", label: "History" },
   ];
 
   return (
@@ -130,16 +141,21 @@ export default function App() {
             <h1 className="text-lg font-bold text-rtc-orange tracking-tight">RTC Radar</h1>
             <span className="text-rtc-muted text-xs hidden md:inline">Respect the Chain — Trend Detection</span>
           </div>
-          <button
-            onClick={handleFullScan}
-            disabled={scanning}
-            className="px-4 py-2 bg-rtc-orange text-white text-xs font-semibold rounded-lg hover:bg-rtc-orange-dim transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {scanning && (
-              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center gap-3">
+            {scanning && scanStatus && (
+              <span className="text-rtc-muted text-[10px] hidden sm:inline animate-pulse">{scanStatus}</span>
             )}
-            {scanning ? "Scanning..." : "Scan & Analyze"}
-          </button>
+            <button
+              onClick={handleFullScan}
+              disabled={scanning}
+              className="px-4 py-2 bg-rtc-orange text-white text-xs font-semibold rounded-lg hover:bg-rtc-orange-dim transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {scanning && (
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
+              {scanning ? "Scanning..." : "Scan & Analyze"}
+            </button>
+          </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto">
           {tabs.map((t) => (
@@ -164,6 +180,31 @@ export default function App() {
           ))}
         </nav>
       </header>
+
+      {/* Scan Progress Banner */}
+      {scanning && (
+        <div className="bg-rtc-orange/10 border-b border-rtc-orange/20 px-4 py-2">
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
+            <div className="w-4 h-4 border-2 border-rtc-orange border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div className="flex-1">
+              <div className="flex items-center gap-3 text-xs">
+                <span className={loadingYT ? "text-rtc-orange" : youtubeData.length > 0 ? "text-rtc-green" : "text-rtc-muted"}>
+                  {loadingYT ? "YouTube..." : youtubeData.length > 0 ? `YouTube ${youtubeData.length}` : "YouTube"}
+                </span>
+                <span className={loadingReddit ? "text-rtc-orange" : redditData.length > 0 ? "text-rtc-green" : "text-rtc-muted"}>
+                  {loadingReddit ? "Reddit..." : redditData.length > 0 ? `Reddit ${redditData.length}` : "Reddit"}
+                </span>
+                <span className={loadingTrends ? "text-rtc-orange" : trendsData.dailyTrends.length > 0 ? "text-rtc-green" : "text-rtc-muted"}>
+                  {loadingTrends ? "Trends..." : trendsData.dailyTrends.length > 0 ? `Trends ${trendsData.dailyTrends.length}` : "Trends"}
+                </span>
+                <span className={loadingAnalysis ? "text-rtc-orange" : "text-rtc-muted"}>
+                  {loadingAnalysis ? "AI Analyzing..." : "AI Analysis"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto p-4 md:p-6">
@@ -272,6 +313,18 @@ export default function App() {
             foodTrends={trendsData.foodTrends}
             loading={loadingTrends}
           />
+        )}
+
+        {activeTab === "calendar" && (
+          <ContentCalendar
+            analysis={analysis}
+            youtubeData={youtubeData}
+            redditData={redditData}
+          />
+        )}
+
+        {activeTab === "history" && (
+          <ScanHistory />
         )}
       </main>
     </div>

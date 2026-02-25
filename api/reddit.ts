@@ -19,57 +19,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const subreddits = [
-      "food",
-      "FoodPorn",
-      "streetfood",
-      "foodhacks",
-      "Cooking",
-      "fastfood",
-      "restaurant",
-      "eatsandwiches",
-      "Pizza",
-      "burgers",
-      "tacos",
-      "ramen",
-      "sushi",
+    // Use multi-subreddit queries to reduce request count (Reddit rate-limits aggressively)
+    const subredditGroups = [
+      "food+FoodPorn+streetfood",
+      "Cooking+fastfood+restaurant",
+      "Pizza+burgers+tacos",
+      "ramen+sushi+eatsandwiches+foodhacks",
     ];
 
     const allPosts: RedditPost[] = [];
 
-    for (const sub of subreddits) {
+    for (const group of subredditGroups) {
       try {
-        // Fetch hot + rising posts from each subreddit
-        for (const sort of ["hot", "rising"]) {
-          const url = `https://www.reddit.com/r/${sub}/${sort}.json?limit=15&t=week`;
-          const resp = await fetch(url, {
-            headers: { "User-Agent": "RTCRadar/1.0" },
+        // Fetch hot posts from each group (combined subreddit query)
+        const url = `https://www.reddit.com/r/${group}/hot.json?limit=25&t=week`;
+        const resp = await fetch(url, {
+          headers: { "User-Agent": "RTCRadarBot/1.0 (food trend analysis tool)" },
+        });
+        if (!resp.ok) continue;
+        const data = await resp.json();
+
+        for (const item of data.data?.children || []) {
+          const post = item.data;
+          if (!post || post.stickied) continue;
+
+          allPosts.push({
+            id: post.id,
+            title: post.title,
+            selftext: (post.selftext || "").slice(0, 300),
+            author: post.author,
+            subreddit: post.subreddit,
+            score: post.score,
+            numComments: post.num_comments,
+            url: post.url,
+            permalink: `https://reddit.com${post.permalink}`,
+            thumbnail: post.thumbnail?.startsWith("http") ? post.thumbnail : "",
+            createdUtc: post.created_utc,
+            upvoteRatio: post.upvote_ratio,
           });
-          if (!resp.ok) continue;
-          const data = await resp.json();
-
-          for (const item of data.data?.children || []) {
-            const post = item.data;
-            if (!post || post.stickied) continue;
-
-            allPosts.push({
-              id: post.id,
-              title: post.title,
-              selftext: (post.selftext || "").slice(0, 300),
-              author: post.author,
-              subreddit: post.subreddit,
-              score: post.score,
-              numComments: post.num_comments,
-              url: post.url,
-              permalink: `https://reddit.com${post.permalink}`,
-              thumbnail: post.thumbnail?.startsWith("http") ? post.thumbnail : "",
-              createdUtc: post.created_utc,
-              upvoteRatio: post.upvote_ratio,
-            });
-          }
         }
+
+        // Small delay to avoid rate limiting
+        await new Promise(r => setTimeout(r, 200));
       } catch {
-        // Skip failed subreddits
+        // Skip failed groups
         continue;
       }
     }
