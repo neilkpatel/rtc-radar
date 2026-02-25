@@ -5,9 +5,10 @@ import AnalysisPanel from "./components/AnalysisPanel";
 import GoogleTrendsPanel from "./components/GoogleTrendsPanel";
 import ContentCalendar from "./components/ContentCalendar";
 import ScanHistory from "./components/ScanHistory";
+import HowItWorks from "./components/HowItWorks";
 import type { TrendAnalysis } from "./lib/types";
 
-type Tab = "analysis" | "youtube" | "reddit" | "trends" | "calendar" | "history";
+type Tab = "analysis" | "youtube" | "reddit" | "trends" | "calendar" | "history" | "how";
 
 export default function App() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem("rtc_auth") === "1");
@@ -166,6 +167,7 @@ export default function App() {
     { key: "trends", label: "Google Trends" },
     { key: "calendar", label: "Calendar" },
     { key: "history", label: "History" },
+    { key: "how", label: "How It Works" },
   ];
 
   return (
@@ -366,6 +368,10 @@ export default function App() {
 
         {activeTab === "history" && (
           <ScanHistory />
+        )}
+
+        {activeTab === "how" && (
+          <HowItWorks />
         )}
       </main>
     </div>
