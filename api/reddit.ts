@@ -49,63 +49,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Use Pullpush.io API (free Reddit mirror, not blocked on cloud IPs)
     const subredditGroups = [
-      // National food
-      "food+FoodPorn+streetfood",
-      "Cooking+fastfood+restaurant",
-      "Pizza+burgers+tacos",
-      "ramen+sushi+eatsandwiches+foodhacks",
-      // NYC local
-      "FoodNYC+nyceats+Brooklyn+newyorkcity+AskNYC",
-      // South Florida local
-      "SouthFlorida+Miami+florida+fortlauderdale+BocaRaton",
+      "food,FoodPorn,streetfood",
+      "Cooking,fastfood,restaurant",
+      "Pizza,burgers,tacos",
+      "ramen,sushi,eatsandwiches,foodhacks",
+      "FoodNYC,nyceats,Brooklyn,newyorkcity,AskNYC",
+      "SouthFlorida,Miami,florida,fortlauderdale,BocaRaton",
     ];
 
     const allPosts: RedditPost[] = [];
+    const weekAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
 
     for (const group of subredditGroups) {
       try {
-        // Use OAuth endpoint with app-only auth (less aggressive blocking than www)
-        let data: any = null;
-        const url = `https://www.reddit.com/r/${group}/hot.json?limit=25&t=week&raw_json=1`;
-        try {
-          const resp = await fetch(url, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-              "Accept-Language": "en-US,en;q=0.5",
-              "Accept-Encoding": "gzip, deflate, br",
-              "Connection": "keep-alive",
-            },
-            redirect: "follow",
-          });
-          if (resp.ok) {
-            const text = await resp.text();
-            // Reddit sometimes returns HTML instead of JSON
-            if (text.startsWith("{")) {
-              data = JSON.parse(text);
-            }
-          }
-        } catch { /* */ }
-        if (!data) continue;
+        const url = `https://api.pullpush.io/reddit/search/submission/?subreddit=${group}&size=25&sort=desc&sort_type=score&after=${weekAgo}`;
+        const resp = await fetch(url);
+        if (!resp.ok) continue;
+        const data = await resp.json();
 
-        for (const item of data.data?.children || []) {
-          const post = item.data;
+        for (const post of data.data || []) {
           if (!post || post.stickied) continue;
 
           allPosts.push({
             id: post.id,
-            title: post.title,
+            title: post.title || "",
             selftext: (post.selftext || "").slice(0, 300),
-            author: post.author,
-            subreddit: post.subreddit,
-            score: post.score,
-            numComments: post.num_comments,
-            url: post.url,
-            permalink: `https://reddit.com${post.permalink}`,
+            author: post.author || "",
+            subreddit: post.subreddit || "",
+            score: post.score || 0,
+            numComments: post.num_comments || 0,
+            url: post.url || "",
+            permalink: `https://reddit.com/r/${post.subreddit}/comments/${post.id}`,
             thumbnail: post.thumbnail?.startsWith("http") ? post.thumbnail : "",
-            createdUtc: post.created_utc,
-            upvoteRatio: post.upvote_ratio,
+            createdUtc: post.created_utc || 0,
+            upvoteRatio: post.upvote_ratio || 0.5,
           });
         }
 
@@ -165,11 +144,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from("cache")
           .upsert({ key: "reddit", data: result, updated_at: new Date().toISOString() });
       } catch { /* cache write failed, not critical */ }
-    }
-
-    // If no results, add debug info
-    if (scored.length === 0) {
-      return res.status(200).json({ posts: [], debug: "All subreddit groups returned empty" });
     }
 
     return res.status(200).json(result);
