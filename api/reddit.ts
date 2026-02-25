@@ -65,18 +65,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     for (const group of subredditGroups) {
       try {
-        const url = `https://www.reddit.com/r/${group}/hot.json?limit=25&t=week`;
-        const resp = await fetch(url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; RTCRadarBot/1.0; food trend analysis)",
-            "Accept": "application/json",
-          },
-        });
-        if (!resp.ok) {
-          console.log(`Reddit ${group}: HTTP ${resp.status}`);
-          continue;
+        // Try old.reddit.com first (less aggressive IP blocking), fall back to www
+        let data: any = null;
+        for (const domain of ["old.reddit.com", "www.reddit.com"]) {
+          const url = `https://${domain}/r/${group}/hot.json?limit=25&t=week`;
+          const resp = await fetch(url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+              "Accept": "text/html,application/json",
+            },
+          });
+          if (resp.ok) {
+            data = await resp.json();
+            break;
+          }
         }
-        const data = await resp.json();
+        if (!data) continue;
 
         for (const item of data.data?.children || []) {
           const post = item.data;
