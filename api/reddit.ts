@@ -25,6 +25,35 @@ function getSupabase() {
   return createClient(url, key);
 }
 
+async function fetchSubreddit(sub: string): Promise<RedditPost[]> {
+  const url = `https://api.pullpush.io/reddit/search/submission/?subreddit=${sub}&size=10&sort=desc&sort_type=score`;
+  const resp = await fetch(url);
+  if (!resp.ok) return [];
+  const text = await resp.text();
+  if (!text.startsWith("{")) return [];
+  const data = JSON.parse(text);
+
+  const posts: RedditPost[] = [];
+  for (const post of data.data || []) {
+    if (!post || post.stickied) continue;
+    posts.push({
+      id: post.id,
+      title: post.title || "",
+      selftext: (post.selftext || "").slice(0, 300),
+      author: post.author || "",
+      subreddit: post.subreddit || "",
+      score: post.score || 0,
+      numComments: post.num_comments || 0,
+      url: post.url || "",
+      permalink: `https://reddit.com/r/${post.subreddit}/comments/${post.id}`,
+      thumbnail: post.thumbnail?.startsWith("http") ? post.thumbnail : "",
+      createdUtc: post.created_utc || 0,
+      upvoteRatio: post.upvote_ratio || 0.5,
+    });
+  }
+  return posts;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
@@ -49,58 +78,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Use Pullpush.io API (free Reddit mirror, not blocked on cloud IPs)
-    const subredditGroups = [
-      "food,FoodPorn,streetfood",
-      "Cooking,fastfood,restaurant",
-      "Pizza,burgers,tacos",
-      "ramen,sushi,eatsandwiches,foodhacks",
-      "FoodNYC,nyceats,Brooklyn,newyorkcity,AskNYC",
-      "SouthFlorida,Miami,florida,fortlauderdale,BocaRaton",
+    const subreddits = [
+      // National food
+      "food", "FoodPorn", "streetfood", "Cooking", "fastfood",
+      "Pizza", "burgers", "ramen", "sushi",
+      // NYC
+      "FoodNYC", "nyceats", "Brooklyn", "newyorkcity",
+      // South Florida
+      "SouthFlorida", "Miami", "florida", "BocaRaton",
     ];
 
-    const allPosts: RedditPost[] = [];
-    const errors: string[] = [];
-
-    for (const group of subredditGroups) {
-      try {
-        const url = `https://api.pullpush.io/reddit/search/submission/?subreddit=${group}&size=25&sort=desc&sort_type=score`;
-        const resp = await fetch(url);
-        if (!resp.ok) {
-          errors.push(`${group}: HTTP ${resp.status}`);
-          continue;
-        }
-        const text = await resp.text();
-        if (!text.startsWith("{")) {
-          errors.push(`${group}: not JSON`);
-          continue;
-        }
-        const data = JSON.parse(text);
-
-        for (const post of data.data || []) {
-          if (!post || post.stickied) continue;
-
-          allPosts.push({
-            id: post.id,
-            title: post.title || "",
-            selftext: (post.selftext || "").slice(0, 300),
-            author: post.author || "",
-            subreddit: post.subreddit || "",
-            score: post.score || 0,
-            numComments: post.num_comments || 0,
-            url: post.url || "",
-            permalink: `https://reddit.com/r/${post.subreddit}/comments/${post.id}`,
-            thumbnail: post.thumbnail?.startsWith("http") ? post.thumbnail : "",
-            createdUtc: post.created_utc || 0,
-            upvoteRatio: post.upvote_ratio || 0.5,
-          });
-        }
-
-        await new Promise(r => setTimeout(r, 200));
-      } catch {
-        continue;
-      }
-    }
+    // Fetch all in parallel
+    const results = await Promise.all(
+      subreddits.map(sub => fetchSubreddit(sub).catch(() => [] as RedditPost[]))
+    );
+    const allPosts = results.flat();
 
     // Deduplicate
     const seen = new Set<string>();
@@ -151,12 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await supabase
           .from("cache")
           .upsert({ key: "reddit", data: result, updated_at: new Date().toISOString() });
-      } catch { /* cache write failed, not critical */ }
-    }
-
-    // If no results, return debug info
-    if (scored.length === 0) {
-      return res.status(200).json({ posts: [], debug: errors.length > 0 ? errors : "No posts found" });
+      } catch { /* */ }
     }
 
     return res.status(200).json(result);
