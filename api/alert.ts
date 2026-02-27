@@ -22,9 +22,12 @@ async function getAccessToken(): Promise<string> {
 async function sendGmail(accessToken: string, to: string[], subject: string, html: string) {
   const toHeader = to.map(e => e.trim()).join(", ");
 
+  // RFC 2047 encode subject to handle any non-ASCII characters (trend names, em dashes, etc.)
+  const encodedSubject = `=?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`;
+
   const mimeMessage = [
     `To: ${toHeader}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodedSubject}`,
     `MIME-Version: 1.0`,
     `Content-Type: text/html; charset="UTF-8"`,
     ``,
@@ -103,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const subjectParts = [];
   if (filmNowCount > 0) subjectParts.push(`${filmNowCount} to FILM NOW`);
   if (thisWeekCount > 0) subjectParts.push(`${thisWeekCount} this week`);
-  const subject = `RTC Radar: ${subjectParts.join(" + ")} — ${urgentTrends[0].trend}`;
+  const subject = `RTC Radar: ${subjectParts.join(" + ")} - ${urgentTrends[0].trend}`;
 
   const scanTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
