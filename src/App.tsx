@@ -30,6 +30,7 @@ export default function App() {
   // Scan progress messages
   const [scanStatus, setScanStatus] = useState("");
   const [lastScanTime, setLastScanTime] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   // Load latest scan on mount
   useEffect(() => {
@@ -57,8 +58,12 @@ export default function App() {
         setYoutubeData(data.videos || []);
         return data.videos || [];
       }
-    } catch { /* */ }
-    setLoadingYT(false);
+      setScanError("YouTube fetch failed");
+    } catch (e: any) {
+      setScanError(`YouTube error: ${e.message}`);
+    } finally {
+      setLoadingYT(false);
+    }
     return [];
   }, []);
 
@@ -71,8 +76,12 @@ export default function App() {
         setRedditData(data.posts || []);
         return data.posts || [];
       }
-    } catch { /* */ }
-    setLoadingReddit(false);
+      setScanError("Reddit fetch failed");
+    } catch (e: any) {
+      setScanError(`Reddit error: ${e.message}`);
+    } finally {
+      setLoadingReddit(false);
+    }
     return [];
   }, []);
 
@@ -86,11 +95,14 @@ export default function App() {
           dailyTrends: data.dailyTrends || [],
           foodTrends: data.foodTrends || [],
         });
-        setLoadingTrends(false);
         return data;
       }
-    } catch { /* */ }
-    setLoadingTrends(false);
+      setScanError("Trends fetch failed");
+    } catch (e: any) {
+      setScanError(`Trends error: ${e.message}`);
+    } finally {
+      setLoadingTrends(false);
+    }
     return {};
   }, []);
 
@@ -120,6 +132,7 @@ export default function App() {
   // Full scan: fetch all sources then run AI analysis
   const handleFullScan = useCallback(async () => {
     setScanning(true);
+    setScanError(null);
     setActiveTab("analysis");
     setScanStatus("Scanning YouTube, Reddit, and Google Trends...");
 
@@ -245,6 +258,16 @@ export default function App() {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Banner */}
+      {scanError && !scanning && (
+        <div className="bg-red-950/50 border-b border-red-800/30 px-4 py-2">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <span className="text-red-400 text-xs">{scanError}</span>
+            <button onClick={() => setScanError(null)} className="text-red-400/60 hover:text-red-400 text-xs ml-4">dismiss</button>
           </div>
         </div>
       )}

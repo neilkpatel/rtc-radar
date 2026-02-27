@@ -1,6 +1,20 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 
+async function fetchWithRetry(url: string, options?: RequestInit, retries = 2): Promise<Response> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const resp = await fetch(url, options);
+      if (resp.ok || resp.status < 500) return resp; // Don't retry client errors
+      if (i < retries) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    } catch (e) {
+      if (i === retries) throw e;
+      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+  return fetch(url, options); // Final attempt
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Verify this is a cron call (Vercel sends authorization header)
   const authHeader = req.headers["authorization"];
@@ -17,17 +31,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const errors: string[] = [];
 
   try {
-    // Fetch all sources in parallel
+    // Fetch all sources in parallel (with retry on 5xx / network errors)
     const [ytResp, redditResp, trendsResp] = await Promise.all([
-      fetch(`${baseUrl}/api/youtube`).then(async r => {
+      fetchWithRetry(`${baseUrl}/api/youtube`).then(async r => {
         if (!r.ok) { errors.push(`YouTube: ${r.status} ${await r.text().catch(() => "")}`); return { videos: [] }; }
         return r.json();
       }).catch(e => { errors.push(`YouTube: ${e.message}`); return { videos: [] }; }),
-      fetch(`${baseUrl}/api/reddit`).then(async r => {
+      fetchWithRetry(`${baseUrl}/api/reddit`).then(async r => {
         if (!r.ok) { errors.push(`Reddit: ${r.status} ${await r.text().catch(() => "")}`); return { posts: [] }; }
         return r.json();
       }).catch(e => { errors.push(`Reddit: ${e.message}`); return { posts: [] }; }),
-      fetch(`${baseUrl}/api/trends`).then(async r => {
+      fetchWithRetry(`${baseUrl}/api/trends`).then(async r => {
         if (!r.ok) { errors.push(`Trends: ${r.status} ${await r.text().catch(() => "")}`); return { dailyTrends: [], foodTrends: [] }; }
         return r.json();
       }).catch(e => { errors.push(`Trends: ${e.message}`); return { dailyTrends: [], foodTrends: [] }; }),
@@ -38,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const trendsData = { dailyTrends: trendsResp.dailyTrends || [], foodTrends: trendsResp.foodTrends || [] };
 
     // Run AI analysis
-    const analysisResp = await fetch(`${baseUrl}/api/analyze`, {
+    const analysisResp = await fetchWithRetry(`${baseUrl}/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ youtubeData, redditData, trendsData }),
